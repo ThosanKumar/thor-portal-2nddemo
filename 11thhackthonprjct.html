@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodFlow Analytics Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .logo i {
+            margin-right: 15px;
+            color: #e74c3c;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 25px;
+            border: 1px solid #2ecc71;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #2ecc71;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .last-updated {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 15px 25px;
+            background: transparent;
+            border: 2px solid #bdc3c7;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            white-space: nowrap;
+            color: #7f8c8d;
+        }
+
+        .nav-tab.active {
+            background: #3498db;
+            border-color: #3498db;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .nav-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-color);
+        }
+
+        .stat-card.orders::before { --accent-color: #3498db; }
+        .stat-card.revenue::before { --accent-color: #2ecc71; }
+        .stat-card.drivers::before { --accent-color: #9b59b6; }
+        .stat-card.time::before { --accent-color: #f39c12; }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .stat-title {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-icon {
+            font-size: 2.5em;
+            opacity: 0.2;
+            color: var(--accent-color);
+        }
+
+        .stat-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .stat-change.positive {
+            color: #27ae60;
+        }
+
+        .stat-change.negative {
+            color: #e74c3c;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chart-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Mock Chart Styles */
+        .chart {
+            height: 300px;
+            background: linear-gradient(45deg, rgba(52, 152, 219, 0.1), rgba(155, 89, 182, 0.1));
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            clip-path: polygon(0% 100%, 10% 80%, 20% 85%, 30% 60%, 40% 70%, 50% 40%, 60% 55%, 70% 30%, 80% 45%, 90% 20%, 100% 35%, 100% 100%);
+            opacity: 0.7;
+        }
+
+        .chart-placeholder {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            font-weight: 600;
+            z-index: 1;
+        }
+
+        /* Quick Stats */
+        .quick-stats {
+            display: grid;
+            gap: 20px;
+        }
+
+        .quick-stat {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            border-left: 4px solid;
+            transition: transform 0.3s ease;
+        }
+
+        .quick-stat:hover {
+            transform: translateX(5px);
+        }
+
+        .quick-stat.good { border-left-color: #27ae60; }
+        .quick-stat.warning { border-left-color: #f39c12; }
+        .quick-stat.critical { border-left-color: #e74c3c; }
+
+        .quick-stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .quick-stat-title {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .quick-stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.good { background: #27ae60; }
+        .progress-fill.warning { background: #f39c12; }
+        .progress-fill.critical { background: #e74c3c; }
+
+        /* City Performance Table */
+        .performance-table {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .table th {
+            background: rgba(52, 152, 219, 0.1);
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .table tr:hover {
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        /* Real-time Updates */
+        .real-time-update {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: 600;
+            transform: translateY(-100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .real-time-update.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Orders Section */
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .order-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .order-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .order-status.pending { background: #f39c12; color: white; }
+        .order-status.preparing { background: #3498db; color: white; }
+        .order-status.delivered { background: #27ae60; color: white; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header-top {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+
+            .stat-value {
+                font-size: 2.5em;
+            }
+
+            .logo {
+                font-size: 2em;
+            }
+        }
+
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header fade-in">
+            <div class="header-top">
+                <div class="logo">
+                    <i class="fas fa-utensils"></i>
+                    FoodFlow Analytics
+                </div>
+                <div class="status">
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        <span>System Healthy</span>
+                    </div>
+                    <div class="last-updated">
+                        Last updated: <span id="last-updated">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="overview">
+                    <i class="fas fa-chart-line"></i> Overview
+                </button>
+                <button class="nav-tab" data-tab="orders">
+                    <i class="fas fa-shopping-cart"></i> Orders
+                </button>
+                <button class="nav-tab" data-tab="performance">
+                    <i class="fas fa-chart-bar"></i> Performance
+                </button>
+                <button class="nav-tab" data-tab="analytics">
+                    <i class="fas fa-analytics"></i> Analytics
+                </button>
+            </nav>
+        </header>
+
+        <!-- Real-time Stats -->
+        <section class="stats-grid bounce-in">
+            <div class="stat-card orders">
+                <div class="stat-header">
+                    <div class="stat-title">Active Orders</div>
+                    <i class="fas fa-shopping-cart stat-icon"></i>
+                </div>
+                <div class="stat-value" id="active-orders">1,247</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>12% from yesterday</span>
+                </div>
+            </div>
+
+            <div class="stat-card revenue">
+                <div class="stat-header">
+                    <div class="stat-title">Daily Revenue</div>
+                    <i class="fas fa-dollar-sign stat-icon"></i>
+                </div>
+                <div class="stat-value" id="daily-revenue">₹89,650</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>8% from yesterday</span>
+                </div>
+            </div>
+
+            <div class="stat-card drivers">
+                <div class="stat-header">
+                    <div class="stat-title">Active Drivers</div>
+                    <i class="fas fa-motorcycle stat-icon"></i>
+                </div>
+                <div class="stat-value" id="active-drivers">156</div>
+                <div class="stat-change negative">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>3% from yesterday</span>
+                </div>
+            </div>
+
+            <div class="stat-card time">
+                <div class="stat-header">
+                    <div class="stat-title">Avg Delivery Time</div>
+                    <i class="fas fa-clock stat-icon"></i>
+                </div>
+                <div class="stat-value" id="avg-delivery-time">28min</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>5% improvement</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Overview Section -->
+        <section id="overview" class="content-section active fade-in">
+            <div class="dashboard-grid">
+                <div class="chart-container">
+                    <div class="chart-title">
+                        <i class="fas fa-chart-area"></i>
+                        Today's Order Trends
+                    </div>
+                    <div class="chart">
+                        <div class="chart-placeholder">Interactive Chart Coming Soon</div>
+                    </div>
+                </div>
+
+                <div class="quick-stats">
+                    <div class="quick-stat good">
+                        <div class="quick-stat-header">
+                            <span class="quick-stat-title">On-Time Deliveries</span>
+                            <i class="fas fa-check-circle" style="color: #27ae60;"></i>
+                        </div>
+                        <div class="quick-stat-value">87%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill good" style="width: 87%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="quick-stat warning">
+                        <div class="quick-stat-header">
+                            <span class="quick-stat-title">Customer Satisfaction</span>
+                            <i class="fas fa-star" style="color: #f39c12;"></i>
+                        </div>
+                        <div class="quick-stat-value">4.2/5</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill warning" style="width: 84%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="quick-stat good">
+                        <div class="quick-stat-header">
+                            <span class="quick-stat-title">Order Accuracy</span>
+                            <i class="fas fa-bullseye" style="color: #27ae60;"></i>
+                        </div>
+                        <div class="quick-stat-value">94%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill good" style="width: 94%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="quick-stat critical">
+                        <div class="quick-stat-header">
+                            <span class="quick-stat-title">App Performance</span>
+                            <i class="fas fa-mobile-alt" style="color: #e74c3c;"></i>
+                        </div>
+                        <div class="quick-stat-value">0.02% Crashes</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill critical" style="width: 20%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Orders Section -->
+        <section id="orders" class="content-section">
+            <div class="chart-container">
+                <div class="chart-title">
+                    <i class="fas fa-shopping-cart"></i>
+                    Live Order Tracking
+                </div>
+                <div class="orders-grid">
+                    <div class="order-card">
+                        <div class="order-status pending">Pending</div>
+                        <h4>Order #12847</h4>
+                        <p><strong>Customer:</strong> Rajesh Kumar</p>
+                        <p><strong>Restaurant:</strong> Pizza Palace</p>
+                        <p><strong>Time:</strong> 5 minutes ago</p>
+                        <p><strong>Amount:</strong> ₹545</p>
+                    </div>
+
+                    <div class="order-card">
+                        <div class="order-status preparing">Preparing</div>
+                        <h4>Order #12846</h4>
+                        <p><strong>Customer:</strong> Priya Sharma</p>
+                        <p><strong>Restaurant:</strong> Burger King</p>
+                        <p><strong>Time:</strong> 12 minutes ago</p>
+                        <p><strong>Amount:</strong> ₹320</p>
+                    </div>
+
+                    <div class="order-card">
+                        <div class="order-status delivered">Delivered</div>
+                        <h4>Order #12845</h4>
+                        <p><strong>Customer:</strong> Amit Singh</p>
+                        <p><strong>Restaurant:</strong> Domino's</p>
+                        <p><strong>Time:</strong> 25 minutes ago</p>
+                        <p><strong>Amount:</strong> ₹680</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Performance Section -->
+        <section id="performance" class="content-section">
+            <div class="performance-table">
+                <div class="chart-title">
+                    <i class="fas fa-city"></i>
+                    City-wise Performance
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>City</th>
+                            <th>Orders Today</th>
+                            <th>Revenue</th>
+                            <th>Avg Rating</th>
+                            <th>Active Restaurants</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Mumbai</strong></td>
+                            <td>1,250</td>
+                            <td>₹37,500</td>
+                            <td>4.2 ⭐</td>
+                            <td>245</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Delhi</strong></td>
+                            <td>1,100</td>
+                            <td>₹33,000</td>
+                            <td>4.0 ⭐</td>
+                            <td>198</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Bangalore</strong></td>
+                            <td>980</td>
+                            <td>₹29,400</td>
+                            <td>4.3 ⭐</td>
+                            <td>167</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Chennai</strong></td>
+                            <td>760</td>
+                            <td>₹22,800</td>
+                            <td>3.9 ⭐</td>
+                            <td>134</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pune</strong></td>
+                            <td>650</td>
+                            <td>₹19,500</td>
+                            <td>4.1 ⭐</td>
+                            <td>112</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics" class="content-section">
+            <div class="chart-container">
+                <div class="chart-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Advanced Analytics Dashboard
+                </div>
+                <div class="chart">
+                    <div class="chart-placeholder">Advanced Analytics Features Coming Soon</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Real-time Update Notification -->
+    <div class="real-time-update" id="update-notification">
+        📊 Data Updated!
+    </div>
+
+    <script>
+        // Tab Navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and sections
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding section
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Real-time Data Updates
+        function updateStats() {
+            const activeOrders = document.getElementById('active-orders');
+            const dailyRevenue = document.getElementById('daily-revenue');
+            const activeDrivers = document.getElementById('active-drivers');
+            const avgDeliveryTime = document.getElementById('avg-delivery-time');
+            
+            // Simulate real-time updates
+            const currentOrders = parseInt(activeOrders.textContent.replace(',', ''));
+            const currentRevenue = parseInt(dailyRevenue.textContent.replace('₹', '').replace(',', ''));
+            const currentDrivers = parseInt(activeDrivers.textContent);
+            const currentTime = parseInt(avgDeliveryTime.textContent.replace('min', ''));
+            
+            // Random updates
+            activeOrders.textContent = (currentOrders + Math.floor(Math.random() * 20 - 10)).toLocaleString();
+            dailyRevenue.textContent = '₹' + (currentRevenue + Math.floor(Math.random() * 1000)).toLocaleString();
+            activeDrivers.textContent = Math.max(100, currentDrivers + Math.floor(Math.random() * 10 - 5));
+            avgDeliveryTime.textContent = Math.max(15, currentTime + Math.floor(Math.random() * 4 - 2)) + 'min';
+            
+            // Show update notification
+            const notification = document.getElementById('update-notification');
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('last-updated').textContent = now.toLocaleTimeString();
+        }
+
+        // Initialize
+        updateTime();
+        setInterval(updateStats, 5000); // Update every 5 seconds
+        setInterval(updateTime, 1000); // Update time every second
+
+        // Add smooth scrolling and animations
+        document.addEventListener('DOMContentLoaded', () => {
+            // Animate elements on page load
+            setTimeout(() => {
+                document.querySelectorAll('.stat-card').forEach((card, index) => {
+                    setTimeout(() => {
+                        card.classList.add('bounce-in');
+                    }, index * 200);
+                });
+            }, 500);
+        });
+
+        // Add hover effects to stat cards
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-10px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
