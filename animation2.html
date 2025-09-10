@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Document</title>
+    <style>
+        body
+        {
+            counter-reset: increase 10;
+        }
+        h1::before
+        {
+            content: counter(increase);
+            counter-increment: increase;
+ 
+        }
+        h1
+        {
+            counter-reset: inc;
+        }
+        p::before
+        {
+            content: counter(inc);
+            counter-increment: inc;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>saikumar</h1>
+    <p>123456</p>
+    <p>123456</p>
+    <p>123456</p>
+    <h1>saikumar</h1>
+    <h1>saikumar</h1>
+    <h1>saikumar</h1>
+    <h1>saikumar</h1>
+    <p>123456</p>
+    <p>123456</p>
+    <p>123456</p>
+ 
+    <h1>saikumar</h1>
+    <h1>saikumar</h1>
+    <h1>saikumar</h1>
+   
+</body>
+</html>
